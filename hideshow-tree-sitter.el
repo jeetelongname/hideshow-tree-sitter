@@ -54,7 +54,7 @@
                              urange
                            nil))
                         (t (go (seq-filter #'inbetween (cdr range)) ;; recursive call (we remove the first element as its usually a large range)
-                            loc urange)))))
+                               loc urange)))))
     (go ranges location ranges)))
 
 (defun hideshow-tree-sitter--get-range ()
@@ -63,11 +63,19 @@
          (byte-loc (position-bytes loc))
          (nodes (hideshow-tree-sitter--get-nodes))
          (ranges-bytepos (seq-map #'tsc-node-byte-range nodes))
-         (range (hideshow-tree-sitter--denestify-captures ranges-bytepos byte-loc)))
-    (car range)))
+         (range (car (hideshow-tree-sitter--denestify-captures ranges-bytepos byte-loc))))
+    (cons (cl-callf byte-to-position (car range))
+          (cl-callf byte-to-position (cdr range)))))
 
 (defun hideshow-tree-sitter-hide-block ()
-  "Hide a block.")
+  "Hide a block."
+  (interactive)
+  (let* ((range (hideshow-tree-sitter--get-range))
+         (point-eol (save-excursion
+                      (goto-char (car range))
+                      (end-of-line)
+                      (point))))
+    (hs-make-overlay point-eol (cdr range) 'code)))
 
 (defun hideshow-tree-sitter-show-block ()
   "Unhide (show) a block.")
