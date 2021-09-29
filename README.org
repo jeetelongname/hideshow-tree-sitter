@@ -1,4 +1,5 @@
-#+TITLE: tree sitter code folding
+#+TITLE: Tree sitter based code folding using the power of hideshow!
 
-
-Add tree sitter based code folding to emacs
+This mode adds tree-sitter based code folding using hideshow behind the scenes.
+It aims to be a somewhat drop in replacement sharing a lot of base code and even
+some commands
