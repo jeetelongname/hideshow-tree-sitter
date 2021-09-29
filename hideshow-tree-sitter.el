@@ -39,28 +39,35 @@
          (nodes (seq-map #'cdr captures)))
     nodes))
 
+(defun hideshow-tree-sitter--denestify-captures (ranges location)
+  "Takes a list of RANGES and a LOCATION will return the range that contain the current point."
+
+  (cl-labels ((inbetween (range)
+                         (< (car range) location (cdr range)))
+              (go (range loc urange)
+                  (cond ((= (length range) 1) range)
+                        ((null range)
+                         (if (inbetween (car urange))
+                             urange
+                           nil))
+                        (t (go
+                            (seq-filter #'inbetween (cdr range))
+                            loc urange)))))
+    (go ranges location ranges)))
+
+
+
 (defun hideshow-tree-sitter--get-range ()
   "Get the range of the node under point."
   (let* ((loc (point))
          (byte-loc (position-bytes loc))
          (nodes (hideshow-tree-sitter--get-nodes))
          (ranges-bytepos (seq-map #'tsc-node-byte-range nodes))
-         (range (seq-filter (lambda (cell)
-                              (and (> byte-loc (car cell))
-                                   (< byte-loc (cdr cell))))
-                            ranges-bytepos)))
-
-    (message "hello %s %d" range (length range))
-
-    (if (not (= 1 (length range)))
-        (error "Something terrible has happened")
-      (let ((range (car range)))
-        (cons (byte-to-position (car range))
-              (byte-to-position (cdr range)))))))
+         (range (hideshow-tree-sitter--denestify-captures ranges-bytepos byte-loc)))
+    (car range)))
 
 (defun hideshow-tree-sitter-hide-block ()
-  "Hide a block."
-  (message "%s" (hideshow-tree-sitter--get-range)))
+  "Hide a block.")
 
 (defun hideshow-tree-sitter-show-block ()
   "Unhide (show) a block.")
@@ -71,7 +78,7 @@
 (defun hideshow-tree-sitter-show-all ()
   "Unhide (show) all blocks.")
 
-(defun hideshow-treesitter-toggle-hiding (&optional e)
+(defun hideshow-tree-sitter-toggle-hiding (&optional e)
   "Toggle hiding/showing of a block.
 See `hideshow-tree-sitter-hide-block' and `hideshow-tree-sitter-show-block'.
 Argument E should be the event that triggered this action."
