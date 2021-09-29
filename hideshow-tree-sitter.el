@@ -41,21 +41,21 @@
 
 (defun hideshow-tree-sitter--denestify-captures (ranges location)
   "Takes a list of RANGES and a LOCATION will return the range that contain the current point."
-
+  ;; I define the inbetween function that takes a cons list of the start and end of a range and check
+  ;; if the location is in that range. it returns a bool
+  ;;
+  ;; I also define go, it recursivly filters out all of the ranges and returns a single element list (or nil if there are no ranges)
   (cl-labels ((inbetween (range)
                          (< (car range) location (cdr range)))
               (go (range loc urange)
-                  (cond ((= (length range) 1) range)
-                        ((null range)
+                  (cond ((= (length range) 1) range) ;; if the length is one the range has been found
+                        ((null range) ;; if nil then either the point is in no ranges or its in the first element (which is usually a structure containing others)
                          (if (inbetween (car urange))
                              urange
                            nil))
-                        (t (go
-                            (seq-filter #'inbetween (cdr range))
+                        (t (go (seq-filter #'inbetween (cdr range)) ;; recursive call (we remove the first element as its usually a large range)
                             loc urange)))))
     (go ranges location ranges)))
-
-
 
 (defun hideshow-tree-sitter--get-range ()
   "Get the range of the node under point."
